@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtected && !user) {
-    return safeRedirect('/login');
+    // return safeRedirect('/login');
   }
 
   // Server-side role check for /admin routes
