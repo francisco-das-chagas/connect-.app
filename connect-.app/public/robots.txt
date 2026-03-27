@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /evento/
+Disallow: /admin/
+Disallow: /sponsor-portal/
+Disallow: /login
+Disallow: /completar-perfil
+Disallow: /api/
+
+Sitemap: https://connectvalley.com.br/sitemap.xml

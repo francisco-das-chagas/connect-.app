@@ -1,0 +1,6 @@
+Ícones do PWA Connect Valley:
+- icon-192x192.svg (192x192px)
+- icon-512x512.svg (512x512px)
+
+Estes ícones aparecem na tela inicial quando o usuário instala o PWA.
+Use a logo do Connect Valley em fundo azul (#2563EB).
