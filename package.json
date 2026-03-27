@@ -1,0 +1,51 @@
+{
+  "name": "connect-valley-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "husky || true"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.0",
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.2.0",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^0.460.0",
+    "next": "^14.2.35",
+    "qrcode.react": "^4.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "next lint --fix --file"
+    ]
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^20.17.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.18",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.0",
+    "lint-staged": "^16.4.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  }
+}

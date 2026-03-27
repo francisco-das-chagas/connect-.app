@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: 37 99% 53%;
+    --background: 222 80% 5%;
+    --foreground: 0 0% 100%;
+    --gold: #F2C94C;
+    --gold-muted: rgba(242, 201, 76, 0.3);
+    --navy: #030816;
+    --navy-light: #0a1930;
+    --navy-card: rgba(255, 255, 255, 0.05);
+    --navy-border: rgba(255, 255, 255, 0.05);
+  }
+
+  body {
+    @apply bg-navy text-white antialiased;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    background-color: #030816;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', system-ui, sans-serif;
+  }
+
+  /* PWA safe areas */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@layer components {
+  /* === BUTTONS === */
+  .btn-primary {
+    @apply bg-gold text-navy-dark px-6 py-3 rounded-full font-semibold
+           hover:bg-gold-light transition-all duration-200
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-gold border border-gold/30 px-6 py-3 rounded-full font-semibold
+           hover:bg-gold/10 hover:border-gold/50 transition-all duration-200
+           active:scale-95;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .btn-ghost {
+    @apply text-silver px-4 py-2 rounded-lg font-medium
+           hover:bg-white/10 transition-colors duration-200;
+  }
+
+  .btn-navy {
+    @apply bg-navy-light text-white px-6 py-3 rounded-full font-semibold
+           hover:bg-white/10 transition-colors duration-200
+           active:scale-95;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  /* === CARDS === */
+  .card {
+    @apply bg-white/5 rounded-2xl border border-white/5 p-4;
+    backdrop-filter: blur(10px);
+  }
+
+  .card-dark {
+    @apply bg-navy-light rounded-2xl border border-white/5 p-4;
+  }
+
+  .card-hover {
+    @apply card hover:bg-white/10 hover:border-gold/20 transition-all duration-300 cursor-pointer;
+  }
+
+  .card-gold {
+    @apply bg-white/5 rounded-2xl border border-gold/30 p-4;
+    backdrop-filter: blur(10px);
+  }
+
+  .card-gold-hover {
+    @apply card-gold hover:border-gold/50 hover:bg-gold/5 transition-all duration-300 cursor-pointer;
+  }
+
+  /* === INPUTS === */
+  .input {
+    @apply w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white
+           focus:ring-2 focus:ring-gold/50 focus:border-gold/50
+           outline-none transition-all duration-200
+           placeholder:text-white/30 text-sm;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  /* .input-dark merged into .input — use .input everywhere */
+
+  /* === BADGES === */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    font-family: 'Montserrat', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-live {
+    @apply badge bg-red-500/20 text-red-400 animate-pulse;
+  }
+
+  .badge-track,
+  .badge-gold {
+    @apply badge bg-gold/20 text-gold;
+  }
+
+  .badge-diamond {
+    @apply badge bg-cyan-400/20 text-cyan-300 border border-cyan-400/30;
+  }
+
+  .badge-ouro {
+    @apply badge bg-gold/20 text-gold border border-gold/30;
+  }
+
+  .badge-prata {
+    @apply badge bg-silver/20 text-silver-light border border-silver/30;
+  }
+
+  /* === LAYOUT === */
+  .page-container {
+    @apply max-w-lg mx-auto px-4 pb-24;
+  }
+
+  .section-title {
+    @apply text-lg font-bold text-white mb-3 uppercase tracking-tight;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .section-label {
+    @apply text-xs font-bold text-gold uppercase mb-2;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.1em;
+  }
+
+  /* === TEXT EFFECTS === */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #f7d96e, #F2C94C, #d4a84b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* === BACKGROUND EFFECTS === */
+  .bg-navy-gradient {
+    background: linear-gradient(180deg, #030816 0%, #0a1930 50%, #030816 100%);
+  }
+
+  .bg-hero-gradient {
+    background: linear-gradient(180deg, rgba(3, 8, 22, 0.3) 0%, #030816 100%);
+  }
+
+  .bg-card-glow {
+    background: radial-gradient(ellipse at center, rgba(242, 201, 76, 0.03) 0%, transparent 70%);
+  }
+
+  /* === TIER CARD BORDERS === */
+  .tier-diamond {
+    border-image: linear-gradient(180deg, rgba(103, 232, 249, 0.5), rgba(103, 232, 249, 0.1)) 1;
+  }
+
+  .tier-ouro {
+    border-image: linear-gradient(180deg, rgba(242, 201, 76, 0.5), rgba(242, 201, 76, 0.1)) 1;
+  }
+
+  .tier-prata {
+    border-color: rgba(209, 213, 219, 0.3);
+  }
+}
+
+/* Dark select options */
+select option {
+  background-color: #0a1930;
+  color: #ffffff;
+}
+
+/* Date/time input dark mode fix */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.8);
+}
+
+/* Scrollbar minimal */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+/* Hide scrollbar completely for carousel areas */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Bottom nav safe area */
+.bottom-nav {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Snap scroll */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slideUp {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(242,201,76,0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(242, 201, 76, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(242, 201, 76, 0.2); }
+}
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
