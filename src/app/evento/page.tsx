@@ -1,248 +1,112 @@
-'use client';
+'use client'
+import Link from 'next/link'
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useAttendee } from '@/hooks/useAttendee';
-import { useEvent } from '@/hooks/useEvent';
-import { createSupabaseBrowser } from '@/lib/supabase';
-import { EventBanner } from '@/components/layout/EventBanner';
-import { PointsBar } from '@/components/gamification/PointsBar';
-import { formatTime, isSessionLive } from '@/lib/utils';
-import type { EventSession, EventSponsor, EventNotification, EventMeeting } from '@/types';
-
-export default function EventoHome() {
-  const { attendee } = useAttendee();
-  const { event } = useEvent();
-  const [nextSession, setNextSession] = useState<EventSession | null>(null);
-  const [featuredSponsors, setFeaturedSponsors] = useState<EventSponsor[]>([]);
-  const [notifications, setNotifications] = useState<EventNotification[]>([]);
-  const [nextMeeting, setNextMeeting] = useState<(EventMeeting & { sponsor?: { name: string; logo_url: string | null } }) | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    if (!event) return;
-    const supabase = createSupabaseBrowser();
-
-    supabase
-      .from('event_sessions')
-      .select('id, title, description, speaker_name, speaker_title, speaker_photo_url, start_time, end_time, room, track, session_type')
-      .eq('event_id', event.id)
-      .gte('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
-      .limit(1)
-      .then(({ data, error }) => {
-        if (error) { console.error('Error fetching sessions:', error); setErrorMsg('Erro ao carregar dados. Tente novamente.'); return; }
-        if (data?.[0]) setNextSession(data[0] as EventSession);
-      });
-
-    supabase
-      .from('event_sponsors')
-      .select('id, name, logo_url, tier, tagline, segment, sort_order')
-      .eq('event_id', event.id)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .limit(6)
-      .then(({ data, error }) => {
-        if (error) { console.error('Error fetching sponsors:', error); return; }
-        if (data) setFeaturedSponsors(data as EventSponsor[]);
-      });
-
-    supabase
-      .from('event_notifications')
-      .select('id, title, body, sent_at, target')
-      .eq('event_id', event.id)
-      .not('sent_at', 'is', null)
-      .order('sent_at', { ascending: false })
-      .limit(3)
-      .then(({ data, error }) => {
-        if (error) { console.error('Error fetching notifications:', error); return; }
-        if (data) setNotifications(data as EventNotification[]);
-      });
-
-    // Fetch next meeting if attendee exists
-    if (attendee) {
-      supabase
-        .from('event_meetings')
-        .select(`
-          id, event_id, attendee_id, sponsor_id, proposed_time, duration_minutes, location, status, attendee_notes, sponsor_notes,
-          sponsor:event_sponsors(name, logo_url)
-        `)
-        .eq('attendee_id', attendee.id)
-        .eq('event_id', event.id)
-        .in('status', ['pending', 'confirmed'])
-        .gte('proposed_time', new Date().toISOString())
-        .order('proposed_time', { ascending: true })
-        .limit(1)
-        .then(({ data, error }) => {
-          if (error) { console.error('Error fetching meetings:', error); return; }
-          if (data?.[0]) setNextMeeting(data[0] as unknown as EventMeeting & { sponsor?: { name: string; logo_url: string | null } });
-        });
+export default function EventoDashboard() {
+  const quickAccessLinks = [
+    {
+      label: 'SUA AGENDA',
+      desc: 'Palestras e horários',
+      href: '/evento/agenda',
+      icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+    },
+    {
+      label: 'MEU INGRESSO',
+      desc: 'QR Code de acesso',
+      href: '/evento/qr-code',
+      icon: 'M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z'
+    },
+    {
+      label: 'NETWORKING',
+      desc: 'Conecte-se com players',
+      href: '/evento/networking',
+      icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'
+    },
+    {
+      label: 'SPONSORS',
+      desc: 'Marcas oficiais',
+      href: '/evento/patrocinadores',
+      icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'
     }
-  }, [event, attendee]);
-
-  const firstName = attendee?.full_name?.split(' ')[0] || 'Participante';
+  ]
 
   return (
-    <div className="page-container pt-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Ola, {firstName}! 👋</h1>
-        <p className="text-sm text-silver/60">Bem-vindo ao evento</p>
+    <div className="flex flex-col gap-14 w-full max-w-7xl mx-auto px-6 md:px-12 pt-10 pb-20">
+      {/* CABEÇALHO */}
+      <div className="flex flex-col">
+        <span className="text-[#0055FF] text-xs font-bold tracking-[0.2em] mb-3 uppercase font-display">
+          Status: Credenciado
+        </span>
+        <h1 className="text-5xl md:text-7xl font-display font-black leading-[0.9] tracking-tight">
+          <span className="text-white block mb-1">OLÁ,</span>
+          <span className="text-[#F2C94C] italic block">PARTICIPANTE</span>
+        </h1>
       </div>
 
-      {errorMsg && (
-        <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-          {errorMsg}
+      {/* BANNER CENTRAL */}
+      <div className="w-full rounded-2xl bg-gradient-to-r from-[#030A1A] to-[#051C42] border border-blue-900/30 p-10 md:p-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-10 shadow-2xl">
+        <div className="max-w-2xl">
+          <span className="text-[#F2C94C] text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mb-2 block font-display">
+            Próximo Passo
+          </span>
+          <h2 className="text-3xl md:text-5xl font-display font-black text-white uppercase mb-4 tracking-tight">
+            Complete seu <span className="text-[#F2C94C]">Perfil</span>
+          </h2>
+          <p className="text-gray-400 text-sm md:text-base leading-relaxed font-sans max-w-xl">
+            Para tirar o máximo proveito do networking e receber contatos de
+            patrocinadores, mantenha o seu perfil 100% atualizado.
+          </p>
         </div>
-      )}
-
-      {/* Gamification Points Bar */}
-      <div className="mb-4">
-        <PointsBar eventId={event?.id} attendeeId={attendee?.id} />
+        <Link
+          href="/completar-perfil"
+          className="bg-[#F2C94C] text-[#030816] px-10 py-4 rounded-full font-bold uppercase tracking-widest text-sm hover:bg-white hover:scale-105 transition-all duration-300 flex-shrink-0 font-display shadow-[0_0_20px_rgba(242,201,76,0.2)]"
+        >
+          Atualizar Agora
+        </Link>
       </div>
 
-      <div className="mb-6">
-        <EventBanner />
-      </div>
-
-      {/* Next Meeting */}
-      {nextMeeting && (
-        <div className="mb-6">
-          <h2 className="section-title">Proxima reuniao</h2>
-          <Link href="/evento/meus-agendamentos" className="card-hover block">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-lg">📅</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-white text-sm truncate">
-                  {nextMeeting.sponsor?.name || 'Patrocinador'}
-                </p>
-                {nextMeeting.proposed_time && (
-                  <p className="text-xs text-silver/60">
-                    {new Date(nextMeeting.proposed_time).toLocaleString('pt-BR', {
-                      weekday: 'short',
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                )}
-              </div>
-              <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
-                nextMeeting.status === 'confirmed'
-                  ? 'bg-green-500/20 text-green-400'
-                  : 'bg-yellow-500/20 text-yellow-400'
-              }`}>
-                {nextMeeting.status === 'confirmed' ? '✅ Confirmado' : '⏳ Pendente'}
-              </span>
-            </div>
-          </Link>
+      {/* ACESSO RÁPIDO */}
+      <div>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-8 h-[2px] bg-[#F2C94C]"></div>
+          <h3 className="text-xl md:text-2xl font-display font-black text-white uppercase tracking-[0.1em]">
+            Acesso Rápido
+          </h3>
         </div>
-      )}
 
-      {nextSession && (
-        <div className="mb-6">
-          <h2 className="section-title">Proxima sessao</h2>
-          <Link href={`/evento/agenda/${nextSession.id}`} className="card-hover block">
-            <div className="flex items-center gap-2 mb-2">
-              {isSessionLive(nextSession.start_time, nextSession.end_time) && (
-                <span className="badge-live">AO VIVO</span>
-              )}
-              <span className="text-xs text-silver/50">
-                {formatTime(nextSession.start_time)} - {formatTime(nextSession.end_time)}
-              </span>
-              {nextSession.track && <span className="badge-track">{nextSession.track}</span>}
-            </div>
-            <h3 className="font-semibold text-white">{nextSession.title}</h3>
-            {nextSession.speaker_name && (
-              <p className="text-sm text-silver/60 mt-1">
-                {nextSession.speaker_name} {nextSession.speaker_title && `· ${nextSession.speaker_title}`}
-              </p>
-            )}
-            {nextSession.room && (
-              <p className="text-xs text-silver/60 mt-1">📍 {nextSession.room}</p>
-            )}
-          </Link>
-        </div>
-      )}
-
-      <div className="mb-6">
-        <h2 className="section-title">Acesso rapido</h2>
-        <div className="grid grid-cols-5 gap-2">
-          {[
-            { href: '/evento/agenda', icon: '📋', label: 'Agenda' },
-            { href: '/evento/patrocinadores', icon: '🏢', label: 'Sponsors' },
-            { href: '/evento/networking', icon: '🤝', label: 'Rede' },
-            { href: '/evento/ranking', icon: '🏆', label: 'Ranking' },
-            { href: '/evento/meu-perfil', icon: '📱', label: 'Meu QR' },
-          ].map((item) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {quickAccessLinks.map((link, index) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-accent-500/30 hover:bg-accent-500/10 transition-colors"
+              key={index}
+              href={link.href}
+              className="bg-[#050B14] border border-white/5 rounded-2xl p-8 flex flex-col justify-between min-h-[200px] hover:border-[#F2C94C]/30 hover:bg-[#0A1120] transition-all duration-300 cursor-pointer group"
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-[10px] font-medium text-silver/70">{item.label}</span>
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#F2C94C]/50 transition-colors duration-300">
+                <svg
+                  className="w-5 h-5 text-gray-500 group-hover:text-[#F2C94C] transition-colors duration-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d={link.icon}
+                  />
+                </svg>
+              </div>
+              <div className="mt-8">
+                <h4 className="text-lg font-display font-black text-white uppercase tracking-wide group-hover:text-[#F2C94C] transition-colors duration-300">
+                  {link.label}
+                </h4>
+                <p className="text-gray-500 text-xs md:text-sm font-sans mt-1">
+                  {link.desc}
+                </p>
+              </div>
             </Link>
           ))}
         </div>
       </div>
-
-      {notifications.length > 0 && (
-        <div className="mb-6">
-          <h2 className="section-title">Avisos</h2>
-          <div className="space-y-2">
-            {notifications.map((notif) => (
-              <div key={notif.id} className="card p-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm text-white">{notif.title}</p>
-                    <p className="text-xs text-silver/60">{notif.body}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {featuredSponsors.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="section-title mb-0">Patrocinadores</h2>
-            <Link href="/evento/patrocinadores" className="text-sm text-accent-500 font-medium">
-              Ver todos
-            </Link>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            {featuredSponsors.map((sponsor) => (
-              <Link
-                key={sponsor.id}
-                href={`/evento/patrocinadores/${sponsor.id}`}
-                className="flex-shrink-0 w-28"
-              >
-                <div className="card p-3 text-center">
-                  <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center mx-auto mb-2">
-                    {sponsor.logo_url ? (
-                      <img src={sponsor.logo_url} alt={sponsor.name} className="w-12 h-12 object-contain" />
-                    ) : (
-                      <span className="text-lg font-bold text-silver/60">{sponsor.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <p className="text-xs font-medium text-silver/80 truncate">{sponsor.name}</p>
-                  <span className="text-[10px] text-silver/60 capitalize">{sponsor.tier}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
-  );
+  )
 }

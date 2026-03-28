@@ -5,7 +5,7 @@ import Countdown from '@/components/landing/Countdown';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: `${EVENT_CONFIG.name} — O futuro comeca agora`,
+  title: `${EVENT_CONFIG.name} — O Futuro Começa Agora`,
   description: EVENT_CONFIG.manifesto,
   openGraph: {
     title: EVENT_CONFIG.name,
@@ -42,203 +42,123 @@ const jsonLd = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-navy text-white relative overflow-hidden">
-      {/* JSON-LD structured data for SEO */}
+    <div className="min-h-screen bg-[#030816] text-white font-sans relative overflow-x-hidden">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Poppins:wght@300;400;600&display=swap');
+        .font-display { font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: -0.02em; }
+        .font-sans { font-family: 'Poppins', sans-serif; }
+      `}} suppressHydrationWarning />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      {/* ===== NAVBAR ===== */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#030816]/80 backdrop-blur-lg border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <img
+            src="/connect-2026.svg"
+            alt="Connect Valley Logo"
+            className="h-8 md:h-10 opacity-90"
+          />
+          <Link
+            href="/login"
+            className="bg-white/5 border border-white/10 text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#F2C94C] hover:text-[#030816] hover:border-[#F2C94C] transition-all duration-300"
+          >
+            Acessar Plataforma
+          </Link>
+        </div>
+      </nav>
+
       {/* ===== HERO SECTION ===== */}
-      <section className="relative min-h-[100vh] flex flex-col items-center justify-center">
-        {/* Hero Background Image */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center pt-20">
         <div className="absolute inset-0 z-0">
           <Image
             src={EVENT_CONFIG.images.hero}
-            alt="Connect Valley"
+            alt="Connect Valley Hero"
             fill
-            className="object-cover opacity-30"
+            className="object-cover opacity-20"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-navy/60 via-navy/40 to-navy" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#030816]/40 via-[#030816]/80 to-[#030816]" />
         </div>
 
-        {/* Sticky Nav */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-navy/95 backdrop-blur-md border-b border-white/5">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Image
-              src={EVENT_CONFIG.images.icon}
-              alt="Connect Valley"
-              width={28}
-              height={28}
-              className="opacity-90"
-            />
+        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center flex flex-col items-center">
+          <span className="text-[#0055FF] text-sm md:text-base font-bold tracking-[0.3em] uppercase mb-6 font-display">
+            Conectando pessoas, ideias e negócios
+          </span>
+          <h1 className="text-5xl md:text-8xl font-display font-black uppercase tracking-tighter leading-[0.9] mb-8 drop-shadow-2xl">
+            <span className="text-white block">O Futuro</span>
+            <span className="text-[#F2C94C] italic block">Começa Agora</span>
+          </h1>
+          
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
             <Link
               href="/login"
-              className="bg-gold text-navy px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider font-montserrat hover:bg-gold-light transition-all"
+              className="bg-[#F2C94C] text-[#030816] px-10 py-5 rounded-full font-display font-black text-lg uppercase tracking-widest hover:scale-105 transition-all duration-300 shadow-[0_0_40px_rgba(242,201,76,0.3)]"
             >
-              Ingressos
+              Garantir Minha Vaga
+            </Link>
+            <Link
+              href="/patrocinador/registro"
+              className="bg-white/5 border border-white/10 text-white px-10 py-5 rounded-full font-display font-bold text-lg uppercase tracking-widest hover:bg-white/10 transition-all duration-300"
+            >
+              Seja um Patrocinador
             </Link>
           </div>
-        </nav>
+        </div>
+      </section>
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-lg mx-auto px-6 text-center pt-20">
-          {/* Logo */}
-          <div className="mb-6">
-            <Image
-              src={EVENT_CONFIG.images.logo}
-              alt="Connect Valley 2026"
-              width={320}
-              height={80}
-              className="mx-auto"
-              priority
-            />
+      {/* ===== SAVE THE DATE (Countdown) ===== */}
+      <section className="relative z-10 -mt-20 px-6 max-w-4xl mx-auto">
+        <div className="bg-gradient-to-r from-[#050B14] to-[#0A1120] border border-white/10 rounded-3xl p-10 md:p-14 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-10">
+          <div>
+            <span className="text-gray-500 uppercase tracking-widest font-bold text-xs">Save the Date</span>
+            <h2 className="text-3xl md:text-5xl font-display font-black uppercase text-white mt-2">
+              16 e 17 <span className="text-[#F2C94C]">Out</span>
+            </h2>
+            <div className="flex items-center gap-2 text-gray-400 mt-4">
+              <svg className="w-5 h-5 text-[#F2C94C]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <span className="font-sans text-sm">{EVENT_CONFIG.venue} - {EVENT_CONFIG.location}</span>
+            </div>
           </div>
+          <div className="w-full md:w-auto">
+            <Countdown />
+          </div>
+        </div>
+      </section>
 
-          {/* Tagline */}
-          <h2 className="text-lg md:text-xl font-bold uppercase tracking-wider text-gold font-montserrat mb-2">
-            O futuro comeca agora
+      {/* ===== SOBRE & STATS ===== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="relative aspect-square md:aspect-video lg:aspect-square rounded-3xl overflow-hidden border border-white/10 shadow-2xl group">
+          <Image
+            src={EVENT_CONFIG.images.palco}
+            alt="Palco Connect Valley"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#030816] via-transparent to-transparent" />
+        </div>
+        
+        <div>
+          <span className="text-[#F2C94C] font-bold tracking-[0.2em] uppercase text-xs mb-4 block font-display">O Ecossistema</span>
+          <h2 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tight leading-tight mb-6">
+            Muito mais que um evento,<br/><span className="text-white">um ecossistema.</span>
           </h2>
-          <p className="text-sm text-white/60 font-poppins">
-            Conectando pessoas, ideias e negocios
+          <p className="text-gray-400 text-lg leading-relaxed mb-10 font-sans">
+            {EVENT_CONFIG.manifesto}
           </p>
 
-          {/* CTA Button */}
-          <div className="mt-8">
-            <Link
-              href="/login"
-              className="inline-block bg-gold text-navy px-8 py-4 rounded-full font-bold text-base uppercase tracking-wider font-montserrat hover:bg-gold-light transition-all active:scale-[0.97] shadow-lg shadow-gold/20"
-            >
-              Garantir minha vaga
-            </Link>
-          </div>
-
-          {/* Scroll indicator */}
-          <div className="mt-12 animate-bounce">
-            <svg className="w-5 h-5 mx-auto text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== KEYWORDS MARQUEE ===== */}
-      <section className="py-6 bg-navy-light border-y border-white/5 overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...EVENT_CONFIG.keywords, ...EVENT_CONFIG.keywords].map((kw, i) => (
-            <span key={i} className="inline-flex items-center mx-6">
-              <span className="text-sm md:text-base font-bold uppercase tracking-[0.15em] text-white/70 font-montserrat">
-                {kw}
-              </span>
-              <span className="ml-6 w-1.5 h-1.5 rounded-full bg-gold/60" />
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* ===== SAVE THE DATE ===== */}
-      <section className="py-16 px-6">
-        <div className="max-w-lg mx-auto text-center">
-          <p className="section-label">Save the date</p>
-          <h2 className="text-4xl md:text-5xl font-black uppercase font-montserrat tracking-tight mb-2">
-            <span className="text-white">16 e 17</span>
-          </h2>
-          <h3 className="text-2xl md:text-3xl font-black uppercase font-montserrat text-gold tracking-tight">
-            de Outubro
-          </h3>
-
-          {/* Countdown (client component) */}
-          <Countdown />
-
-          {/* Venue */}
-          <div className="mt-8 space-y-2">
-            <div className="flex items-center justify-center gap-2 text-white/60">
-              <svg className="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-              </svg>
-              <span className="text-sm font-poppins">{EVENT_CONFIG.venue} - {EVENT_CONFIG.location}</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== SOBRE / ABOUT ===== */}
-      <section className="py-16 px-6">
-        <div className="max-w-lg mx-auto">
-          <div className="mb-8">
-            <div className="relative w-full h-48 rounded-2xl overflow-hidden mb-6">
-              <Image
-                src={EVENT_CONFIG.images.palco}
-                alt="Palco Connect Valley"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-transparent" />
-            </div>
-            <p className="section-label">Sobre</p>
-            <h2 className="text-2xl font-bold uppercase font-montserrat tracking-tight mb-4">
-              Muito mais que um evento,{' '}
-              <span className="text-gold">um ecossistema.</span>
-            </h2>
-            <p className="text-sm text-white/60 font-poppins leading-relaxed">
-              {EVENT_CONFIG.manifesto}
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
             {[
               { value: EVENT_CONFIG.stats.speakers, label: 'Speakers' },
               { value: EVENT_CONFIG.stats.hours, label: EVENT_CONFIG.stats.hoursLabel },
               { value: EVENT_CONFIG.stats.participants, label: 'Participantes' },
             ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-black text-gold font-montserrat">{stat.value}</div>
-                <div className="text-[10px] uppercase tracking-wider text-white/60 font-montserrat mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== IMERSAO ===== */}
-      <section className="py-16 px-6 bg-navy-light/30">
-        <div className="max-w-lg mx-auto">
-          <p className="section-label text-center">Viva a imersao</p>
-          <h2 className="text-2xl font-bold uppercase font-montserrat tracking-tight text-center mb-8">
-            2 dias intensivos de{' '}
-            <span className="text-gold">programacao</span>
-          </h2>
-
-          {/* Day cards */}
-          <div className="grid grid-cols-2 gap-3 mb-8">
-            <div className="card-gold text-center">
-              <p className="text-xs text-gold uppercase font-montserrat font-bold tracking-wider">Dia 01</p>
-              <p className="text-lg font-bold font-montserrat mt-1">16/10</p>
-              <p className="text-[10px] text-white/50 mt-1">13h00 - 20h30</p>
-            </div>
-            <div className="card-gold text-center">
-              <p className="text-xs text-gold uppercase font-montserrat font-bold tracking-wider">Dia 02</p>
-              <p className="text-lg font-bold font-montserrat mt-1">17/10</p>
-              <p className="text-[10px] text-white/50 mt-1">10h00 - 19h00</p>
-            </div>
-          </div>
-
-          {/* Features */}
-          <div className="space-y-3">
-            {[
-              { icon: '🎤', title: 'Palestras com referencias nacionais', desc: 'Conteudo de alto nivel com speakers renomados' },
-              { icon: '🔧', title: 'Oficinas praticas simultaneas', desc: 'IA, Financas, Marketing Digital, CRM e muito mais' },
-              { icon: '🎙️', title: 'Paineis de sucesso', desc: 'Parceiros e patrocinadores trazem cases reais' },
-              { icon: '🤝', title: '4 espacos simultaneos', desc: 'Operacao continua com networking integrado' },
-            ].map((item) => (
-              <div key={item.title} className="flex items-start gap-3 card p-3">
-                <span className="text-xl flex-shrink-0">{item.icon}</span>
-                <div>
-                  <p className="text-sm font-semibold font-montserrat text-white">{item.title}</p>
-                  <p className="text-xs text-white/50 font-poppins">{item.desc}</p>
-                </div>
+              <div key={stat.label} className="bg-[#050B14] border border-white/5 rounded-2xl p-6 text-center hover:border-[#F2C94C]/30 transition-colors">
+                <div className="text-4xl font-display font-black text-[#F2C94C]">{stat.value}</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-2">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -246,105 +166,73 @@ export default function LandingPage() {
       </section>
 
       {/* ===== APP FEATURES ===== */}
-      <section className="py-16 px-6">
-        <div className="max-w-lg mx-auto">
-          <p className="section-label text-center">No app</p>
-          <h2 className="text-2xl font-bold uppercase font-montserrat tracking-tight text-center mb-8">
-            Tudo na palma da{' '}
-            <span className="text-gold">sua mao</span>
-          </h2>
+      <section className="py-24 px-6 bg-[#050B14] border-y border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-[#0055FF] font-bold tracking-[0.2em] uppercase text-xs mb-4 block font-display">Experiência Digital</span>
+            <h2 className="text-4xl md:text-6xl font-display font-black uppercase tracking-tight">
+              Tudo na palma <span className="text-[#F2C94C] italic">da mão</span>
+            </h2>
+          </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: '📋', label: 'Agenda', desc: 'Programacao completa', href: '/login' },
-              { icon: '🤝', label: 'Networking', desc: 'Conecte-se', href: '/login' },
-              { icon: '🏢', label: 'Patrocinadores', desc: 'Conheca os parceiros', href: '/login' },
-              { icon: '📱', label: 'QR Badge', desc: 'Seu cracha digital', href: '/login' },
-              { icon: '💬', label: 'Chat', desc: 'Mensagens 1:1', href: '/login' },
-              { icon: '🗺️', label: 'Mapa', desc: 'Planta do evento', href: '/login' },
+              { 
+                svg: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />, 
+                label: 'Sua Agenda', desc: 'Monte sua programação ideal', href: '/evento/agenda' 
+              },
+              { 
+                svg: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />, 
+                label: 'Networking Hub', desc: 'Conecte-se com gigantes', href: '/evento/networking' 
+              },
+              { 
+                svg: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />, 
+                label: 'Ingresso Digital', desc: 'Seu acesso VIP via QR', href: '/evento' 
+              },
+              { 
+                svg: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />, 
+                label: 'Mapa Interativo', desc: 'Encontre stands e palcos', href: '/evento/mapa' 
+              },
+              { 
+                svg: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />, 
+                label: 'Patrocinadores', desc: 'Negócios B2B em tempo real', href: '/patrocinador/registro' 
+              },
+              { 
+                svg: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />, 
+                label: 'Chat Integrado', desc: 'Mensagens diretas 1:1', href: '/evento' 
+              },
             ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="card-hover p-4 group"
-              >
-                <span className="text-2xl block mb-2 group-hover:scale-110 transition-transform">{item.icon}</span>
-                <p className="font-bold text-sm font-montserrat text-white">{item.label}</p>
-                <p className="text-xs text-white/60 font-poppins">{item.desc}</p>
+              <Link key={item.label} href={item.href} className="bg-[#030816] border border-white/10 rounded-3xl p-8 hover:border-[#F2C94C]/50 hover:bg-white/5 transition-all group">
+                <svg className="w-10 h-10 text-gray-500 group-hover:text-[#F2C94C] mb-6 group-hover:scale-110 transition-transform origin-left" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {item.svg}
+                </svg>
+                <h3 className="font-display font-black text-xl text-white uppercase mb-2 group-hover:text-[#F2C94C] transition-colors">{item.label}</h3>
+                <p className="text-sm text-gray-500 font-sans">{item.desc}</p>
               </Link>
             ))}
           </div>
-
-          {/* CTA */}
-          <div className="mt-8 text-center">
-            <Link
-              href="/login"
-              className="inline-block bg-gold text-navy px-8 py-4 rounded-full font-bold text-sm uppercase tracking-wider font-montserrat hover:bg-gold-light transition-all active:scale-[0.97] shadow-lg shadow-gold/20"
-            >
-              Entrar no evento
-            </Link>
-            <p className="text-xs text-white/30 mt-3 font-poppins">
-              Cadastre-se para acessar a agenda, networking e muito mais
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== GALERIA ===== */}
-      <section className="py-12 overflow-hidden">
-        <div className="max-w-lg mx-auto px-6 mb-6">
-          <p className="section-label text-center">Galeria</p>
-          <h2 className="text-xl font-bold uppercase font-montserrat tracking-tight text-center">
-            Momentos <span className="text-gold">inesqueciveis</span>
-          </h2>
-        </div>
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide px-6 snap-x">
-          {EVENT_CONFIG.images.galeria.map((src, i) => (
-            <div key={i} className="flex-shrink-0 w-64 h-40 rounded-xl overflow-hidden snap-start border border-white/5">
-              <Image
-                src={src}
-                alt={`Momento Connect Valley ${i + 1}`}
-                width={256}
-                height={160}
-                className="object-cover w-full h-full"
-              />
-            </div>
-          ))}
         </div>
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="py-12 px-6 border-t border-white/5">
-        <div className="max-w-lg mx-auto text-center">
-          <Image
-            src={EVENT_CONFIG.images.logo}
-            alt="Connect Valley"
-            width={160}
-            height={40}
-            className="mx-auto mb-4 opacity-60"
+      <footer className="py-16 px-6 bg-[#030816]">
+        <div className="max-w-7xl mx-auto text-center flex flex-col items-center">
+          <img
+            src="/connect-2026.svg"
+            alt="Connect Valley Logo"
+            className="h-10 mb-8 opacity-80"
           />
-          <p className="text-xs text-white/30 font-poppins mb-1">
-            Connect Valley e uma iniciativa RF Group.
+          <p className="text-sm text-gray-500 font-sans mb-2">
+            Connect Valley é uma iniciativa <span className="text-white font-bold">RF Group</span>.
           </p>
-          <p className="text-xs text-white/20 font-poppins">
-            Conectando propositos, gerando resultados.
+          <p className="text-sm text-gray-600 font-sans mb-8">
+            Conectando propósitos, gerando resultados reais.
           </p>
-          <div className="flex items-center justify-center gap-4 mt-4">
+          
+          <div className="flex gap-6">
             {EVENT_CONFIG.social.instagram && (
-              <a href={EVENT_CONFIG.social.instagram} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-gold transition-colors">
+              <a href={EVENT_CONFIG.social.instagram} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-[#F2C94C] hover:border-[#F2C94C] transition-all">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-              </a>
-            )}
-            {EVENT_CONFIG.social.linkedin && (
-              <a href={EVENT_CONFIG.social.linkedin} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-gold transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              </a>
-            )}
-            {EVENT_CONFIG.social.website && (
-              <a href={EVENT_CONFIG.social.website} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-gold transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                </svg>
               </a>
             )}
           </div>

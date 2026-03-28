@@ -31,7 +31,7 @@ export default function LoginPage() {
           })
         } else {
           setMessage({
-            text: 'Erro ao enviar o link. Verifique o terminal.',
+            text: 'Erro ao enviar o link. Tente novamente.',
             type: 'error'
           })
         }
@@ -54,84 +54,85 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-navy px-4">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {isLogin ? 'Bem-vindo de volta!' : 'Junte-se ao Evento'}
-        </h1>
-        <p className="text-silver/70 max-w-sm mx-auto">
-          {isLogin
-            ? 'Insira o seu e-mail para receber o seu link de acesso.'
-            : 'Crie a sua conta rapidamente usando apenas o seu e-mail.'}
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#030816] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* Importando as fontes e garantindo a identidade visual */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Poppins:wght@300;400;600&display=swap');
+        .font-display { font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: -0.02em; }
+        .font-sans { font-family: 'Poppins', sans-serif; }
+        .bg-blue-glow { background: radial-gradient(circle at center, rgba(0,85,255,0.15) 0%, rgba(3,8,22,0) 70%); }
+      `
+        }}
+      />
 
-      <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl">
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-silver/80 mb-1"
-            >
-              E-mail
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="seu.nome@empresa.com"
-              required
-              className="w-full px-4 py-3 bg-navy-dark border border-white/10 rounded-xl text-white placeholder:text-silver/30 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all"
-            />
-          </div>
+      {/* Efeito de Brilho no Fundo */}
+      <div className="absolute inset-0 bg-blue-glow opacity-50 pointer-events-none"></div>
 
+      <div className="w-full max-w-md flex flex-col items-center relative z-10">
+        {/* Logo - CORRIGIDA AQUI */}
+        <img
+          src="/connect-2026.svg"
+          alt="Connect Valley Logo"
+          className="h-12 md:h-16 mb-10 drop-shadow-2xl"
+        />
+
+        {/* Título Principal */}
+        <h2 className="text-3xl md:text-4xl font-display uppercase text-white mb-10 text-center drop-shadow-[0_0_15px_rgba(0,85,255,0.4)]">
+          O Futuro começa agora
+        </h2>
+
+        <form onSubmit={handleAuth} className="w-full flex flex-col gap-4">
+          {/* Campo de Email Arredondado */}
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="Seu melhor e-mail"
+            required
+            className="w-full px-8 py-4 bg-[#0A1930]/50 border border-white/20 rounded-full text-white placeholder:text-gray-500 focus:outline-none focus:border-[#F2C94C] focus:bg-[#0A1930] transition-all text-center text-lg font-medium"
+          />
+
+          {/* Mensagem de Feedback */}
           {message && (
             <div
-              className={`p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+              className={`p-4 rounded-2xl text-sm text-center ${message.type === 'success' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}
             >
               {message.text}
             </div>
           )}
 
+          {/* Botão Principal Dourado */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-accent-500 hover:bg-accent-400 text-navy-dark font-bold rounded-xl transition-colors disabled:opacity-50 flex justify-center items-center cursor-pointer"
+            className="w-full px-8 py-4 bg-[#F2C94C] text-[#030816] rounded-full font-display uppercase tracking-widest font-bold text-lg hover:bg-white hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center cursor-pointer shadow-[0_0_20px_rgba(242,201,76,0.2)]"
           >
             {loading
-              ? 'A enviar link...'
+              ? 'A enviar...'
               : isLogin
-                ? 'Entrar com Link Mágico ✨'
+                ? 'Receber Link Mágico ✨'
                 : 'Criar Conta ✨'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-silver/60 hover:text-white transition-colors cursor-pointer"
-          >
-            {isLogin
-              ? 'Ainda não tem cadastro? Clique aqui para criar'
-              : 'Já tem cadastro? Clique aqui para entrar'}
-          </button>
-        </div>
-
-        {/* Divisória */}
-        <div className="my-6 flex items-center gap-3">
+        {/* Divisória "Ou" */}
+        <div className="w-full flex items-center gap-4 my-8">
           <div className="flex-1 h-px bg-white/10"></div>
-          <span className="text-xs text-silver/50 uppercase">Ou</span>
+          <span className="text-gray-500 text-sm uppercase tracking-widest font-bold">
+            Ou
+          </span>
           <div className="flex-1 h-px bg-white/10"></div>
         </div>
 
-        {/* Botão de Login com Google para facilitar os nossos testes! */}
+        {/* Botão de Login com Google Arredondado */}
         <button
+          type="button"
           onClick={() => signInWithGoogle()}
-          className="w-full py-3 px-4 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl transition-colors flex justify-center items-center gap-2 cursor-pointer"
+          className="w-full px-8 py-4 bg-white text-gray-900 rounded-full font-bold text-lg hover:bg-gray-100 hover:scale-[1.02] transition-all active:scale-95 flex justify-center items-center gap-3 cursor-pointer shadow-lg"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               fill="#4285F4"
@@ -150,6 +151,17 @@ export default function LoginPage() {
             />
           </svg>
           Entrar com o Google
+        </button>
+
+        {/* Link de Trocar Modo */}
+        <button
+          type="button"
+          onClick={() => setIsLogin(!isLogin)}
+          className="mt-8 text-gray-400 text-sm hover:text-white transition-colors underline decoration-white/20 underline-offset-4"
+        >
+          {isLogin
+            ? 'Ainda não tem cadastro? Clique aqui para criar'
+            : 'Já tem cadastro? Clique aqui para entrar'}
         </button>
       </div>
     </div>

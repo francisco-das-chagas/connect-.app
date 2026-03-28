@@ -1,263 +1,161 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { createSupabaseBrowser } from '@/lib/supabase';
-import { useEvent } from '@/hooks/useEvent';
-import { useAttendee } from '@/hooks/useAttendee';
-import { usePresence } from '@/hooks/usePresence';
-import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { AttendeeCard } from '@/components/networking/AttendeeCard';
-import { GroupChat } from '@/components/networking/GroupChat';
-import { getShortName } from '@/lib/utils';
-import { INTEREST_OPTIONS } from '@/types';
-import type { EventAttendee } from '@/types';
+import { useState } from 'react'
 
-type TabKey = 'grupo' | 'pessoas';
+// Dados de teste para o visual
+const MOCK_USERS = [
+  {
+    id: '1',
+    name: 'Dr. Roneely',
+    role: 'CEO & Founder',
+    company: "Galt's Valley",
+    interests: ['Ecossistemas', 'Inovação'],
+    photo: ''
+  },
+  {
+    id: '2',
+    name: 'Marcos Feitosa',
+    role: 'Tech Lead',
+    company: 'RF Group',
+    interests: ['Desenvolvimento', 'IA'],
+    photo: ''
+  },
+  {
+    id: '3',
+    name: 'Ana Silva',
+    role: 'Investidora Angel',
+    company: 'Valley Capital',
+    interests: ['SaaS', 'Investimento'],
+    photo: ''
+  },
+  {
+    id: '4',
+    name: 'Bruno Costa',
+    role: 'Growth Hacking',
+    company: 'StartUp Pro',
+    interests: ['Marketing', 'Escalabilidade'],
+    photo: ''
+  }
+]
 
 export default function NetworkingPage() {
-  const { event } = useEvent();
-  const { attendee: myAttendee } = useAttendee();
-  const [activeTab, setActiveTab] = useState<TabKey>('grupo');
-  const [attendees, setAttendees] = useState<EventAttendee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterInterest, setFilterInterest] = useState('');
-  const [showOnlyCommon, setShowOnlyCommon] = useState(false);
-  // offlineToast removed — messaging now works for offline users too
+  const [searchTerm, setSearchTerm] = useState('')
 
-  // Determine if current user is sponsor or attendee
-  const isSponsor = myAttendee?.ticket_type === 'sponsor';
-  const senderType: 'participante' | 'patrocinador' = isSponsor ? 'patrocinador' : 'participante';
-
-  // Presence tracking - tracks who is online in networking
-  const { onlineUsers, isOnline, onlineCount } = usePresence({
-    eventId: event?.id || '',
-    attendeeId: myAttendee?.id || '',
-    name: myAttendee ? getShortName(myAttendee.full_name) : '',
-    type: senderType,
-    enabled: !!event?.id && !!myAttendee?.id,
-  });
-
-  // Load all networking-visible attendees
-  useEffect(() => {
-    if (!event) return;
-    const supabase = createSupabaseBrowser();
-
-    supabase
-      .from('event_attendees')
-      .select('id, full_name, company, job_title, avatar_url, interests, ticket_type')
-      .eq('event_id', event.id)
-      .eq('networking_opt_in', true)
-      .order('full_name', { ascending: true })
-      .then(({ data, error }) => {
-        if (error) { console.error('Error fetching attendees:', error); }
-        else if (data) {
-          const others = (data as EventAttendee[]).filter(
-            (a) => a.id !== myAttendee?.id
-          );
-          setAttendees(others);
-        }
-        setLoading(false);
-      });
-  }, [event, myAttendee]);
-
-  // Filter attendees
-  const filteredAttendees = (() => {
-    let result = attendees;
-
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (a) =>
-          a.full_name.toLowerCase().includes(q) ||
-          a.company?.toLowerCase().includes(q) ||
-          a.job_title?.toLowerCase().includes(q)
-      );
-    }
-
-    if (filterInterest) {
-      result = result.filter(
-        (a) => a.interests && a.interests.includes(filterInterest)
-      );
-    }
-
-    if (showOnlyCommon && myAttendee?.interests) {
-      result = result.filter(
-        (a) =>
-          a.interests &&
-          a.interests.some((i: string) => myAttendee.interests?.includes(i))
-      );
-    }
-
-    // Sort: online first, then offline
-    result = [...result].sort((a, b) => {
-      const aOnline = isOnline(a.id) ? 1 : 0;
-      const bOnline = isOnline(b.id) ? 1 : 0;
-      if (aOnline !== bOnline) return bOnline - aOnline;
-      return a.full_name.localeCompare(b.full_name);
-    });
-
-    return result;
-  })();
-
-  const getCommonInterests = (other: EventAttendee): string[] => {
-    if (!myAttendee?.interests || !other.interests) return [];
-    return myAttendee.interests.filter((i: string) => other.interests?.includes(i));
-  };
-
-  // Determine user type for display purposes
-  const getUserType = (a: EventAttendee): 'participante' | 'patrocinador' | undefined => {
-    const presenceUser = onlineUsers.get(a.id);
-    if (presenceUser) return presenceUser.type;
-    // If not online, check ticket type
-    if (a.ticket_type === 'sponsor') return 'patrocinador';
-    return undefined;
-  };
-
-  // handleOfflineClick removed — users can now chat with offline participants
-
-  if (loading) return <PageLoading />;
-
-  const tabs: { key: TabKey; label: string; icon: string; count?: number }[] = [
-    { key: 'grupo', label: 'Grupo', icon: '💬' },
-    { key: 'pessoas', label: 'Pessoas', icon: '👥', count: onlineCount },
-  ];
+  const filteredUsers = MOCK_USERS.filter(
+    user =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.company.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)]">
-      {/* Header */}
-      <div className="px-4 pt-4 pb-2 bg-navy">
-        <h1 className="text-xl font-bold text-white mb-3">Networking</h1>
-
-        {/* Tabs */}
-        <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === tab.key
-                  ? 'bg-white/10 text-white'
-                  : 'text-silver/50 hover:text-silver/70'
-              }`}
-            >
-              <span>{tab.icon}</span>
-              {tab.label}
-              {tab.count !== undefined && tab.count > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold">
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+    <div className="flex flex-col gap-10 w-full max-w-7xl mx-auto pt-10 pb-20 px-6 md:px-12">
+      {/* 1. CABEÇALHO HERO */}
+      <div className="flex flex-col">
+        <span className="text-[#0055FF] text-xs font-bold tracking-[0.2em] mb-3 uppercase font-display">
+          Conexões Reais
+        </span>
+        <h1 className="text-4xl md:text-6xl font-display font-black leading-[0.9] tracking-tight">
+          <span className="text-white block mb-1">HUB DE</span>
+          <span className="text-[#F2C94C] italic block">NETWORKING</span>
+        </h1>
+        <p className="text-gray-400 text-sm md:text-base mt-6 font-sans max-w-2xl">
+          Encontre outros participantes, palestrantes e investidores. A sua
+          próxima grande parceria pode estar a um clique.
+        </p>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'grupo' && event && myAttendee && (
-        <GroupChat
-          eventId={event.id}
-          senderId={myAttendee.id}
-          senderName={myAttendee.full_name}
-          senderType={senderType}
-        />
-      )}
-
-      {activeTab === 'pessoas' && (
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          {/* Search */}
-          <div className="relative mb-3">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver/60"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+      {/* 2. BARRA DE BUSCA PREMIUM */}
+      <div className="relative w-full max-w-2xl">
+        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+          <svg
+            className="w-5 h-5 text-gray-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
               strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              />
-            </svg>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, empresa..."
-              className="input pl-10"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
-          </div>
+          </svg>
+        </div>
+        <input
+          type="text"
+          placeholder="Buscar por nome, empresa ou interesse..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full bg-[#050B14] border border-white/10 rounded-full py-4 pl-14 pr-6 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#F2C94C] focus:bg-[#0A1120] transition-all font-sans shadow-lg"
+        />
+      </div>
 
-          {/* Filters */}
-          <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-            <select
-              value={filterInterest}
-              onChange={(e) => setFilterInterest(e.target.value)}
-              className="text-xs px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-silver/60 min-w-fit"
-            >
-              <option value="">Todos os interesses</option>
-              {INTEREST_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+      {/* 3. GRELHA DE PERFIS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+        {filteredUsers.map(user => (
+          <div
+            key={user.id}
+            className="bg-[#050B14] border border-white/5 rounded-3xl p-6 flex flex-col items-center text-center hover:border-[#F2C94C]/30 hover:bg-[#0A1120] transition-all duration-300 group shadow-xl"
+          >
+            {/* Avatar / Foto */}
+            <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#0055FF] to-[#F2C94C] p-1 shadow-[0_0_20px_rgba(0,85,255,0.2)] group-hover:shadow-[0_0_30px_rgba(242,201,76,0.3)] transition-all">
+                <div className="w-full h-full rounded-full bg-[#030816] flex items-center justify-center overflow-hidden">
+                  {user.photo ? (
+                    <img
+                      src={user.photo}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl">👤</span>
+                  )}
+                </div>
+              </div>
+              <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-[#030816] rounded-full"></div>
+            </div>
 
-            <button
-              onClick={() => setShowOnlyCommon(!showOnlyCommon)}
-              className={`text-xs px-3 py-1.5 rounded-full border min-w-fit transition-colors ${
-                showOnlyCommon
-                  ? 'border-accent-500/30 bg-accent-500/10 text-accent-500'
-                  : 'border-white/10 bg-white/5 text-silver/60'
-              }`}
-            >
-              Em comum
-            </button>
-          </div>
-
-          {/* Count + online indicator */}
-          <div className="flex items-center gap-2 mb-3">
-            <p className="text-xs text-silver/60">
-              {filteredAttendees.length} pessoa{filteredAttendees.length !== 1 ? 's' : ''}
+            {/* Informações */}
+            <h3 className="text-xl font-display font-bold text-white uppercase tracking-wide group-hover:text-[#F2C94C] transition-colors">
+              {user.name}
+            </h3>
+            <p className="text-[#0055FF] text-xs font-bold uppercase tracking-widest mt-1">
+              {user.role}
             </p>
-            {onlineCount > 0 && (
-              <span className="flex items-center gap-1 text-xs text-green-400">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                {onlineCount} online
-              </span>
-            )}
-          </div>
+            <p className="text-gray-500 text-sm mt-1 font-sans">
+              {user.company}
+            </p>
 
-          {/* List */}
-          {filteredAttendees.length === 0 ? (
-            <EmptyState
-              icon="👥"
-              title="Nenhum participante"
-              description={
-                search
-                  ? 'Tente outra busca'
-                  : 'Os participantes aparecerao conforme se cadastram'
-              }
-            />
-          ) : (
-            <div className="space-y-2 pb-4">
-              {filteredAttendees.map((a) => (
-                <AttendeeCard
-                  key={a.id}
-                  attendee={a}
-                  commonInterests={getCommonInterests(a)}
-                  isOnline={isOnline(a.id)}
-                  userType={getUserType(a)}
-                />
+            {/* Tags de Interesse */}
+            <div className="flex flex-wrap justify-center gap-2 mt-6">
+              {user.interests.map(interest => (
+                <span
+                  key={interest}
+                  className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[9px] uppercase tracking-widest font-bold text-gray-400 group-hover:border-white/20"
+                >
+                  {interest}
+                </span>
               ))}
             </div>
-          )}
+
+            {/* Botão de Conectar */}
+            <button className="w-full mt-8 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold uppercase text-xs tracking-widest hover:bg-white hover:text-[#030816] transition-all duration-300 shadow-md">
+              Ver Perfil
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {filteredUsers.length === 0 && (
+        <div className="text-center py-20 bg-[#050B14] border border-white/5 rounded-3xl">
+          <h3 className="text-2xl font-display font-bold text-white uppercase tracking-widest mb-2">
+            Ninguém encontrado
+          </h3>
+          <p className="text-gray-500 font-sans">
+            Tente buscar por outro termo.
+          </p>
         </div>
       )}
-
-      {/* Offline toast removed — users can now message offline participants */}
     </div>
-  );
+  )
 }
