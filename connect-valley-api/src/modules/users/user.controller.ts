@@ -20,6 +20,17 @@ export class UserController {
 
   }
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMyProfile(@CurrentUser() user: any){
+    const profile = await this.userService.getCompleteProfile(user.userId)
+
+    return {
+      message: 'Perfil recuperado com sucesso',
+      data: profile
+    }
+
+  }
   @Get('profile-test')
   @UseGuards(JwtAuthGuard)
   getProfile(@Request() req) {

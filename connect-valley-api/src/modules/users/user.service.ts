@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from "@nestjs/common";
+import { Injectable, HttpException, HttpStatus, NotFoundException } from "@nestjs/common";
 import { SupabaseService } from "../../core/supabase/supabase.service";
 import { RegisterDto } from "./dto/register.dto";
 
@@ -8,6 +8,20 @@ export class UserService {
     constructor(
         private readonly supabase: SupabaseService,
     ){} 
+
+    async getCompleteProfile(userId: string){
+        const client = this.supabase.getClient();
+        const { data, error } = await client
+        .from('event_attendees')
+        .select('id, full_name, email, ticket_type, status, created_at')
+        .eq('user_id',userId)
+        .single();
+        if(error || !data){
+            throw new NotFoundException('Perfil do participante não encontrado')
+        }
+
+        return data;
+    }
 
     async findByEmail(email: string) {
         const { data, error } = await this.supabase.getClient()
