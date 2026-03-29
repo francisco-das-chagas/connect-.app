@@ -4,7 +4,7 @@ import { SupabaseService } from './supabase.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule], // <--- ISSO AQUI É OBRIGATÓRIO
+  imports: [ConfigModule],
   providers: [SupabaseService],
   exports: [SupabaseService],
 })

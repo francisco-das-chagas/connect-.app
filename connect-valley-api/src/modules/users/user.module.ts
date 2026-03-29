@@ -1,18 +1,14 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module, forwardRef } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { Party } from './entities/party.entity';
-import { Attendee } from './entities/attendee.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    // REGISTRO DOS REPOSITÓRIOS NAS CONEXÕES CORRETAS
-    TypeOrmModule.forFeature([Party], 'CRM_DB'),    // Party vai para o CRM
-    TypeOrmModule.forFeature([Attendee], 'CONNECT_DB'), // Attendee vai para o CONNECT
+    forwardRef(() => AuthModule),
   ],
   controllers: [UserController],
   providers: [UserService],
-  exports: [UserService], // Exporta para o AuthModule poder usar
+  exports: [UserService], 
 })
 export class UsersModule {}

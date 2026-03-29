@@ -1,6 +1,11 @@
 import { IsEmail, IsNotEmpty, IsString, IsOptional, IsUUID } from 'class-validator';
 
 export class RegisterDto {
+
+  @IsUUID()
+  @IsOptional()
+  user_id: string;
+  
   @IsEmail({}, { message: 'Por favor, insira um e-mail válido.' })
   @IsNotEmpty({ message: 'O e-mail é obrigatório.' })
   email: string;

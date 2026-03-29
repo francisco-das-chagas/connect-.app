@@ -9,8 +9,8 @@ export class SupabaseService implements OnModuleInit {
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit() {
-    const url = this.configService.get<string>('SUPABASE_URL');
-    const key = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+    const url = this.configService.get<string>('NEXT_PUBLIC_SUPABASE_URL');
+    const key = this.configService.get<string>('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
     if (!url || !key) {
       throw new Error('Supabase URL ou Key não encontradas no .env');
