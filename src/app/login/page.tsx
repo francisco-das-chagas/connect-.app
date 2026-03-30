@@ -1,10 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { signInWithMagicLink, signInWithGoogle } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
+import { createSupabaseBrowser } from '@/lib/supabase'
+import { signInWithGoogle } from '@/lib/auth'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const supabase = createSupabaseBrowser()
+
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{
     text: string
@@ -14,43 +20,81 @@ export default function LoginPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim()) return
+    if (!email.trim() || !password.trim()) {
+      setMessage({ text: 'Preencha e-mail e senha.', type: 'error' })
+      return
+    }
 
     setLoading(true)
     setMessage(null)
 
     try {
-      const { error } = await signInWithMagicLink(email.trim())
+      if (isLogin) {
+        // LÓGICA DE ENTRAR (LOGIN)
+        const { data: authData, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password: password.trim()
+          })
 
-      if (error) {
-        console.error('Erro de autenticação:', error)
-        if (error.message.includes('rate_limit')) {
-          setMessage({
-            text: 'Muitas tentativas! O Supabase bloqueou temporariamente. Tente com o Google abaixo.',
-            type: 'error'
-          })
+        if (signInError) throw signInError
+
+        // LOGIN INTELIGENTE: Verifica se o usuário já completou o perfil na tabela 'event_attendees'
+        const { data: attendee } = await supabase
+          .from('event_attendees')
+          .select('id, ticket_type')
+          .eq('user_id', authData.user?.id)
+          .maybeSingle()
+
+        if (attendee) {
+          // Se for uma empresa (sponsor), joga pro portal do patrocinador
+          if (attendee.ticket_type === 'sponsor') {
+            router.push('/sponsor-portal')
+          } else {
+            // Se for participante comum, joga pro evento
+            router.push('/evento')
+          }
         } else {
-          setMessage({
-            text: 'Erro ao enviar o link. Tente novamente.',
-            type: 'error'
-          })
+          // Entrou, mas a conta é "fantasma" (ainda não preencheu o perfil com CPF e dados)
+          router.push('/completar-perfil')
         }
       } else {
+        // LÓGICA DE CRIAR CONTA (SIGNUP)
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: password.trim()
+        })
+
+        if (signUpError) throw signUpError
+
         setMessage({
-          text: 'Link mágico enviado! Verifique a sua caixa de entrada (e a pasta de spam).',
+          text: 'Conta criada com sucesso! Redirecionando...',
           type: 'success'
         })
-        setEmail('')
-      }
-    } catch (err) {
-      console.error('Erro fatal:', err)
-      setMessage({
-        text: 'Erro de conexão com o banco de dados.',
-        type: 'error'
-      })
-    }
 
-    setLoading(false)
+        // Conta nova sempre vai para a tela de completar o perfil para iniciar o registro
+        setTimeout(() => {
+          router.push('/completar-perfil')
+        }, 1500)
+      }
+    } catch (err: any) {
+      console.error('Erro de autenticação:', err)
+
+      // Tradução de alguns erros comuns do Supabase
+      let errorMessage = 'Erro ao processar a requisição.'
+      if (err.message.includes('Invalid login credentials')) {
+        errorMessage = 'E-mail ou senha incorretos.'
+      } else if (err.message.includes('Password should be at least')) {
+        errorMessage = 'A senha deve ter pelo menos 6 caracteres.'
+      } else if (err.message.includes('User already registered')) {
+        errorMessage =
+          'Este e-mail já está cadastrado. Clique em "Já tem cadastro" para entrar.'
+      }
+
+      setMessage({ text: errorMessage, type: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -71,7 +115,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-blue-glow opacity-50 pointer-events-none"></div>
 
       <div className="w-full max-w-md flex flex-col items-center relative z-10">
-        {/* Logo - CORRIGIDA AQUI */}
+        {/* Logo */}
         <img
           src="/connect-2026.svg"
           alt="Connect Valley Logo"
@@ -84,7 +128,16 @@ export default function LoginPage() {
         </h2>
 
         <form onSubmit={handleAuth} className="w-full flex flex-col gap-4">
-          {/* Campo de Email Arredondado */}
+          {/* Mensagem de Feedback */}
+          {message && (
+            <div
+              className={`p-4 rounded-2xl text-sm text-center font-bold ${message.type === 'success' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          {/* Campo de Email */}
           <input
             type="email"
             value={email}
@@ -94,28 +147,44 @@ export default function LoginPage() {
             className="w-full px-8 py-4 bg-[#0A1930]/50 border border-white/20 rounded-full text-white placeholder:text-gray-500 focus:outline-none focus:border-[#F2C94C] focus:bg-[#0A1930] transition-all text-center text-lg font-medium"
           />
 
-          {/* Mensagem de Feedback */}
-          {message && (
-            <div
-              className={`p-4 rounded-2xl text-sm text-center ${message.type === 'success' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}
-            >
-              {message.text}
-            </div>
-          )}
+          {/* Campo de Senha */}
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Sua senha secreta"
+            required
+            minLength={6}
+            className="w-full px-8 py-4 bg-[#0A1930]/50 border border-white/20 rounded-full text-white placeholder:text-gray-500 focus:outline-none focus:border-[#F2C94C] focus:bg-[#0A1930] transition-all text-center text-lg font-medium"
+          />
 
           {/* Botão Principal Dourado */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-8 py-4 bg-[#F2C94C] text-[#030816] rounded-full font-display uppercase tracking-widest font-bold text-lg hover:bg-white hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center cursor-pointer shadow-[0_0_20px_rgba(242,201,76,0.2)]"
+            className="w-full mt-2 px-8 py-4 bg-[#F2C94C] text-[#030816] rounded-full font-display uppercase tracking-widest font-bold text-lg hover:bg-white hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center cursor-pointer shadow-[0_0_20px_rgba(242,201,76,0.2)]"
           >
             {loading
-              ? 'A enviar...'
+              ? 'Processando...'
               : isLogin
-                ? 'Receber Link Mágico ✨'
-                : 'Criar Conta ✨'}
+                ? 'Entrar no Evento'
+                : 'Criar Minha Conta'}
           </button>
         </form>
+
+        {/* Link de Trocar Modo */}
+        <button
+          type="button"
+          onClick={() => {
+            setIsLogin(!isLogin)
+            setMessage(null)
+          }}
+          className="mt-6 text-gray-400 text-sm hover:text-white transition-colors underline decoration-white/20 underline-offset-4"
+        >
+          {isLogin
+            ? 'Ainda não tem cadastro? Clique aqui para criar'
+            : 'Já tem cadastro? Clique aqui para entrar'}
+        </button>
 
         {/* Divisória "Ou" */}
         <div className="w-full flex items-center gap-4 my-8">
@@ -126,7 +195,7 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-white/10"></div>
         </div>
 
-        {/* Botão de Login com Google Arredondado */}
+        {/* Botão de Login com Google */}
         <button
           type="button"
           onClick={() => signInWithGoogle()}
@@ -151,17 +220,6 @@ export default function LoginPage() {
             />
           </svg>
           Entrar com o Google
-        </button>
-
-        {/* Link de Trocar Modo */}
-        <button
-          type="button"
-          onClick={() => setIsLogin(!isLogin)}
-          className="mt-8 text-gray-400 text-sm hover:text-white transition-colors underline decoration-white/20 underline-offset-4"
-        >
-          {isLogin
-            ? 'Ainda não tem cadastro? Clique aqui para criar'
-            : 'Já tem cadastro? Clique aqui para entrar'}
         </button>
       </div>
     </div>

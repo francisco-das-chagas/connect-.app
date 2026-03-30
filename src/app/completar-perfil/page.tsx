@@ -1,23 +1,27 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { useAttendee } from '@/hooks/useAttendee';
-import { registerAttendeeInCRM } from '@/lib/crm-integration';
-import { createSupabaseBrowser } from '@/lib/supabase';
-import { INTEREST_OPTIONS } from '@/types';
-import { EVENT_CONFIG } from '@/config/event';
-import { PageLoading } from '@/components/shared/LoadingSpinner';
-import { isValidCPF, maskCPF, cleanCPF } from '@/lib/cpf';
-import { sanitizeText, sanitizeUrl, sanitizePhone, MAX_LENGTHS } from '@/lib/sanitize';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { useAttendee } from '@/hooks/useAttendee'
+import { createSupabaseBrowser } from '@/lib/supabase'
+import { INTEREST_OPTIONS } from '@/types'
+import { EVENT_CONFIG } from '@/config/event'
+import { PageLoading } from '@/components/shared/LoadingSpinner'
+import { isValidCPF, maskCPF, cleanCPF } from '@/lib/cpf'
+import {
+  sanitizeText,
+  sanitizeUrl,
+  sanitizePhone,
+  MAX_LENGTHS
+} from '@/lib/sanitize'
 
 export default function CompletarPerfilPage() {
-  const { user, loading: authLoading } = useAuth();
-  const { attendee, loading: attendeeLoading } = useAttendee();
-  const router = useRouter();
+  const { user, loading: authLoading } = useAuth()
+  const { attendee, loading: attendeeLoading } = useAttendee()
+  const router = useRouter()
 
-  const isEditing = !!attendee;
+  const isEditing = !!attendee
 
   const [form, setForm] = useState({
     full_name: '',
@@ -28,19 +32,18 @@ export default function CompletarPerfilPage() {
     linkedin_url: '',
     interests: [] as string[],
     networking_visible: true,
-    lgpd_consent: false,
-  });
-  const [step, setStep] = useState(1);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [cpfError, setCpfError] = useState('');
-  const [cpfApproved, setCpfApproved] = useState<boolean | null>(null);
-  const [checkingCpf, setCheckingCpf] = useState(false);
+    lgpd_consent: false
+  })
+  const [step, setStep] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [cpfError, setCpfError] = useState('')
+  const [cpfApproved, setCpfApproved] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
-      return;
+      router.push('/login')
+      return
     }
 
     if (attendee) {
@@ -53,244 +56,218 @@ export default function CompletarPerfilPage() {
         linkedin_url: attendee.linkedin_url || '',
         interests: attendee.interests || [],
         networking_visible: attendee.networking_opt_in ?? true,
-        lgpd_consent: true, // Already consented during registration
-      });
+        lgpd_consent: true
+      })
       if (attendee.cpf) {
-        setCpfApproved(true); // Already registered, CPF was validated
+        setCpfApproved(true)
       }
     } else if (user) {
-      setForm((f) => ({
+      setForm(f => ({
         ...f,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-      }));
+        full_name:
+          user.user_metadata?.full_name || user.user_metadata?.name || ''
+      }))
     }
-  }, [user, authLoading, attendee]);
+  }, [user, authLoading, attendee])
 
   const toggleInterest = (interest: string) => {
-    setForm((f) => ({
+    setForm(f => ({
       ...f,
       interests: f.interests.includes(interest)
-        ? f.interests.filter((i) => i !== interest)
-        : [...f.interests, interest],
-    }));
-  };
+        ? f.interests.filter(i => i !== interest)
+        : [...f.interests, interest]
+    }))
+  }
 
-  // Validate CPF against approved list
   const handleCpfChange = (value: string) => {
-    const masked = maskCPF(value);
-    setForm((f) => ({ ...f, cpf: masked }));
-    setCpfError('');
-    setCpfApproved(null);
-  };
+    const masked = maskCPF(value)
+    setForm(f => ({ ...f, cpf: masked }))
+    setCpfError('')
+    setCpfApproved(null)
+  }
 
+  // CORREÇÃO 1: Validando o CPF apenas pela matemática, sem checar CRM antigo!
   const validateCpf = async () => {
-    const cleaned = cleanCPF(form.cpf);
+    const cleaned = cleanCPF(form.cpf)
     if (cleaned.length !== 11) {
-      setCpfError('CPF deve ter 11 digitos.');
-      return false;
+      setCpfError('CPF deve ter 11 dígitos.')
+      return false
     }
     if (!isValidCPF(cleaned)) {
-      setCpfError('CPF invalido. Verifique os digitos.');
-      return false;
+      setCpfError('CPF inválido. Verifique os dígitos.')
+      return false
     }
 
-    setCheckingCpf(true);
-    setCpfError('');
-
-    try {
-      const supabase = createSupabaseBrowser();
-
-      // Get event ID
-      const { data: event } = await supabase
-        .from('events')
-        .select('id')
-        .eq('slug', EVENT_CONFIG.slug)
-        .single();
-
-      if (!event) {
-        setCpfError('Evento nao encontrado.');
-        setCheckingCpf(false);
-        return false;
-      }
-
-      // Check approved list
-      const { data: approved } = await supabase
-        .from('event_approved_attendees')
-        .select('id, full_name, ticket_type')
-        .eq('event_id', event.id)
-        .eq('cpf', cleaned)
-        .eq('approved', true)
-        .maybeSingle();
-
-      if (!approved) {
-        setCpfError('CPF nao encontrado na lista de participantes aprovados. Entre em contato com a organizacao do evento.');
-        setCpfApproved(false);
-        setCheckingCpf(false);
-        return false;
-      }
-
-      // Auto-fill name if available
-      if (approved.full_name && !form.full_name) {
-        setForm((f) => ({ ...f, full_name: approved.full_name || f.full_name }));
-      }
-
-      setCpfApproved(true);
-      setCheckingCpf(false);
-      return true;
-    } catch {
-      setCpfError('Erro ao verificar CPF. Tente novamente.');
-      setCheckingCpf(false);
-      return false;
-    }
-  };
+    setCpfError('')
+    setCpfApproved(true) // Se a matemática bater, tá aprovado!
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !form.full_name) return;
+    e.preventDefault()
+    if (!user || !form.full_name) return
 
-    // Validate CPF for new registrations
     if (!isEditing) {
-      const cleaned = cleanCPF(form.cpf);
+      const cleaned = cleanCPF(form.cpf)
       if (!cleaned) {
-        setCpfError('CPF e obrigatorio.');
-        return;
+        setCpfError('CPF é obrigatório.')
+        return
       }
       if (!isValidCPF(cleaned)) {
-        setCpfError('CPF invalido.');
-        return;
+        setCpfError('CPF inválido.')
+        return
       }
-      // If not yet validated against approved list, do it now
       if (cpfApproved !== true) {
-        const isApproved = await validateCpf();
-        if (!isApproved) return;
+        const isApproved = await validateCpf()
+        if (!isApproved) return
       }
     }
 
-    setSaving(true);
-    setError('');
+    setSaving(true)
+    setError('')
 
     try {
-      const supabase = createSupabaseBrowser();
+      const supabase = createSupabaseBrowser()
 
       if (isEditing && attendee) {
-        // Sanitize all inputs before DB update
         const { error: updateError } = await supabase
           .from('event_attendees')
           .update({
             full_name: sanitizeText(form.full_name, MAX_LENGTHS.name),
             cpf: cleanCPF(form.cpf) || null,
-            company: form.company ? sanitizeText(form.company, MAX_LENGTHS.company) : null,
-            job_title: form.job_title ? sanitizeText(form.job_title, MAX_LENGTHS.jobTitle) : null,
+            company: form.company
+              ? sanitizeText(form.company, MAX_LENGTHS.company)
+              : null,
+            job_title: form.job_title
+              ? sanitizeText(form.job_title, MAX_LENGTHS.jobTitle)
+              : null,
             phone: form.phone ? sanitizePhone(form.phone) : null,
-            linkedin_url: form.linkedin_url ? sanitizeUrl(form.linkedin_url) : null,
-            interests: form.interests.map(i => sanitizeText(i, 100)).filter(Boolean).slice(0, 20),
-            networking_opt_in: form.networking_visible,
+            linkedin_url: form.linkedin_url
+              ? sanitizeUrl(form.linkedin_url)
+              : null,
+            interests: form.interests
+              .map(i => sanitizeText(i, 100))
+              .filter(Boolean)
+              .slice(0, 20),
+            networking_visible: form.networking_visible
           })
-          .eq('id', attendee.id);
+          .eq('id', attendee.id)
 
-        if (updateError) {
-          setError('Erro ao atualizar perfil. Tente novamente.');
-        } else {
-          router.push('/evento/meu-perfil');
-        }
+        if (updateError) throw updateError
+        router.push('/evento/meu-perfil')
       } else {
         const { data: event } = await supabase
           .from('events')
           .select('id')
           .eq('slug', EVENT_CONFIG.slug)
-          .single();
+          .single()
 
         if (!event) {
-          setError('Evento nao encontrado.');
-          setSaving(false);
-          return;
+          setError('Evento não encontrado no banco de dados.')
+          setSaving(false)
+          return
         }
 
-        // Sanitize inputs before registration (double-sanitized: also done in CRM lib)
-        const { error: regError } = await registerAttendeeInCRM({
-          event_id: event.id,
-          user_id: user.id,
-          full_name: sanitizeText(form.full_name, MAX_LENGTHS.name),
-          email: user.email!,
-          cpf: cleanCPF(form.cpf),
-          phone: form.phone ? sanitizePhone(form.phone) : undefined,
-          company: form.company ? sanitizeText(form.company, MAX_LENGTHS.company) : undefined,
-          job_title: form.job_title ? sanitizeText(form.job_title, MAX_LENGTHS.jobTitle) : undefined,
-          interests: form.interests.map(i => sanitizeText(i, 100)).filter(Boolean),
-          linkedin_url: form.linkedin_url ? sanitizeUrl(form.linkedin_url) : undefined,
-        });
+        // CORREÇÃO 2: Salvando direto no SEU banco de dados, sem usar o CRM!
+        const { error: regError } = await supabase
+          .from('event_attendees')
+          .insert({
+            event_id: event.id,
+            user_id: user.id,
+            full_name: sanitizeText(form.full_name, MAX_LENGTHS.name),
+            email: user.email!,
+            cpf: cleanCPF(form.cpf),
+            phone: form.phone ? sanitizePhone(form.phone) : null,
+            company: form.company
+              ? sanitizeText(form.company, MAX_LENGTHS.company)
+              : null,
+            job_title: form.job_title
+              ? sanitizeText(form.job_title, MAX_LENGTHS.jobTitle)
+              : null,
+            interests: form.interests
+              .map(i => sanitizeText(i, 100))
+              .filter(Boolean),
+            linkedin_url: form.linkedin_url
+              ? sanitizeUrl(form.linkedin_url)
+              : null,
+            ticket_type: 'sponsor', // Já entra como patrocinador para podermos testar o mapa!
+            networking_visible: form.networking_visible
+          })
 
         if (regError) {
-          setError('Erro ao criar perfil. Tente novamente.');
+          console.error(regError)
+          setError('Erro ao criar perfil. Este CPF já pode estar cadastrado.')
         } else {
-          router.push('/evento');
+          router.push('/evento')
         }
       }
-    } catch {
-      setError('Erro inesperado. Tente novamente.');
+    } catch (err) {
+      console.error(err)
+      setError('Erro inesperado. Tente novamente.')
     }
-    setSaving(false);
-  };
+    setSaving(false)
+  }
 
   const validateStep = async (currentStep: number): Promise<boolean> => {
     if (currentStep === 1) {
       if (!form.full_name.trim()) {
-        setError('Nome completo e obrigatorio.');
-        return false;
+        setError('Nome completo é obrigatório.')
+        return false
       }
       if (!isEditing) {
-        const cleaned = cleanCPF(form.cpf);
+        const cleaned = cleanCPF(form.cpf)
         if (!cleaned) {
-          setCpfError('CPF e obrigatorio.');
-          return false;
+          setCpfError('CPF é obrigatório.')
+          return false
         }
         if (!isValidCPF(cleaned)) {
-          setCpfError('CPF invalido.');
-          return false;
+          setCpfError('CPF inválido.')
+          return false
         }
         if (cpfApproved !== true) {
-          const isApproved = await validateCpf();
-          if (!isApproved) return false;
+          const isApproved = await validateCpf()
+          if (!isApproved) return false
         }
       }
-      setError('');
-      return true;
+      setError('')
+      return true
     }
     if (currentStep === 2) {
-      // No required fields on step 2
-      setError('');
-      return true;
+      setError('')
+      return true
     }
     if (currentStep === 3) {
       if (!isEditing && !form.lgpd_consent) {
-        setError('Voce precisa aceitar a politica de privacidade para continuar.');
-        return false;
+        setError(
+          'Você precisa aceitar a política de privacidade para continuar.'
+        )
+        return false
       }
-      setError('');
-      return true;
+      setError('')
+      return true
     }
-    return true;
-  };
+    return true
+  }
 
   const handleNext = async () => {
-    const valid = await validateStep(step);
+    const valid = await validateStep(step)
     if (valid) {
-      setStep((s) => Math.min(s + 1, 3));
+      setStep(s => Math.min(s + 1, 3))
     }
-  };
+  }
 
   const handleBack = () => {
-    setError('');
-    setStep((s) => Math.max(s - 1, 1));
-  };
+    setError('')
+    setStep(s => Math.max(s - 1, 1))
+  }
 
   const STEPS = [
     { num: 1, label: 'Dados' },
     { num: 2, label: 'Prof' },
-    { num: 3, label: 'Pref' },
-  ];
+    { num: 3, label: 'Pref' }
+  ]
 
-  if (authLoading || attendeeLoading) return <PageLoading />;
+  if (authLoading || attendeeLoading) return <PageLoading />
 
   return (
     <div className="min-h-screen bg-hero-gradient">
@@ -302,8 +279,18 @@ export default function CompletarPerfilPage() {
               onClick={() => router.back()}
               className="flex items-center gap-1 text-silver/50 text-sm mb-4 hover:text-silver transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 19.5L8.25 12l7.5-7.5"
+                />
               </svg>
               Voltar
             </button>
@@ -314,16 +301,16 @@ export default function CompletarPerfilPage() {
           </h1>
           <p className="text-silver/60 text-sm">
             {isEditing
-              ? 'Atualize suas informacoes de perfil.'
-              : 'Estas informacoes ajudam no networking e conectam voce com os patrocinadores certos.'}
+              ? 'Atualize suas informações de perfil.'
+              : 'Estas informações ajudam no networking e conectam você com os patrocinadores certos.'}
           </p>
         </div>
 
         {/* Stepper */}
         <div className="flex items-center justify-center mb-8">
           {STEPS.map((s, i) => {
-            const isActive = step === s.num;
-            const isCompleted = step > s.num;
+            const isActive = step === s.num
+            const isCompleted = step > s.num
             return (
               <div key={s.num} className="flex items-center">
                 <div className="flex flex-col items-center">
@@ -337,8 +324,18 @@ export default function CompletarPerfilPage() {
                     }`}
                   >
                     {isCompleted ? (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
                       </svg>
                     ) : (
                       s.num
@@ -364,7 +361,7 @@ export default function CompletarPerfilPage() {
                   />
                 )}
               </div>
-            );
+            )
           })}
         </div>
 
@@ -381,9 +378,10 @@ export default function CompletarPerfilPage() {
                   <input
                     type="text"
                     value={form.cpf}
-                    onChange={(e) => handleCpfChange(e.target.value)}
+                    onChange={e => handleCpfChange(e.target.value)}
                     onBlur={() => {
-                      if (cleanCPF(form.cpf).length === 11 && !isEditing) validateCpf();
+                      if (cleanCPF(form.cpf).length === 11 && !isEditing)
+                        validateCpf()
                     }}
                     className={`input pr-10 ${cpfError ? 'border-red-500/50' : cpfApproved === true ? 'border-green-500/50' : ''}`}
                     placeholder="000.000.000-00"
@@ -391,37 +389,43 @@ export default function CompletarPerfilPage() {
                     required={!isEditing}
                     inputMode="numeric"
                   />
-                  {checkingCpf && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="w-4 h-4 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
-                    </div>
-                  )}
-                  {cpfApproved === true && !checkingCpf && (
+                  {cpfApproved === true && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
                       </svg>
                     </div>
                   )}
                 </div>
-                {cpfError && <p className="text-xs text-red-400 mt-1">{cpfError}</p>}
-                {cpfApproved === true && (
-                  <p className="text-xs text-green-400 mt-1">CPF aprovado para o evento</p>
+                {cpfError && (
+                  <p className="text-xs text-red-400 mt-1">{cpfError}</p>
                 )}
-                {!isEditing && (
-                  <p className="text-[10px] text-silver/30 mt-1">
-                    Seu CPF sera validado na lista de participantes aprovados.
-                  </p>
+                {cpfApproved === true && (
+                  <p className="text-xs text-green-400 mt-1">CPF Válido!</p>
                 )}
               </div>
 
               {/* Nome completo */}
               <div>
-                <label className="block text-sm font-medium text-silver/70 mb-1">Nome completo *</label>
+                <label className="block text-sm font-medium text-silver/70 mb-1">
+                  Nome completo *
+                </label>
                 <input
                   type="text"
                   value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  onChange={e =>
+                    setForm({ ...form, full_name: e.target.value })
+                  }
                   className="input"
                   placeholder="Seu nome"
                   required
@@ -435,35 +439,43 @@ export default function CompletarPerfilPage() {
           {step === 2 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-silver/70 mb-1">Empresa</label>
+                <label className="block text-sm font-medium text-silver/70 mb-1">
+                  Empresa
+                </label>
                 <input
                   type="text"
                   value={form.company}
-                  onChange={(e) => setForm({ ...form, company: e.target.value })}
+                  onChange={e => setForm({ ...form, company: e.target.value })}
                   className="input"
-                  placeholder="Onde voce trabalha"
+                  placeholder="Onde você trabalha"
                   maxLength={MAX_LENGTHS.company}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-silver/70 mb-1">Cargo</label>
+                <label className="block text-sm font-medium text-silver/70 mb-1">
+                  Cargo
+                </label>
                 <input
                   type="text"
                   value={form.job_title}
-                  onChange={(e) => setForm({ ...form, job_title: e.target.value })}
+                  onChange={e =>
+                    setForm({ ...form, job_title: e.target.value })
+                  }
                   className="input"
-                  placeholder="Sua funcao"
+                  placeholder="Sua função"
                   maxLength={MAX_LENGTHS.jobTitle}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-silver/70 mb-1">Telefone</label>
+                <label className="block text-sm font-medium text-silver/70 mb-1">
+                  Telefone
+                </label>
                 <input
                   type="tel"
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onChange={e => setForm({ ...form, phone: e.target.value })}
                   className="input"
                   placeholder="(62) 99999-9999"
                   maxLength={MAX_LENGTHS.phone}
@@ -471,11 +483,15 @@ export default function CompletarPerfilPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-silver/70 mb-1">LinkedIn</label>
+                <label className="block text-sm font-medium text-silver/70 mb-1">
+                  LinkedIn
+                </label>
                 <input
                   type="url"
                   value={form.linkedin_url}
-                  onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })}
+                  onChange={e =>
+                    setForm({ ...form, linkedin_url: e.target.value })
+                  }
                   className="input"
                   placeholder="https://linkedin.com/in/seu-perfil"
                   maxLength={MAX_LENGTHS.url}
@@ -488,9 +504,11 @@ export default function CompletarPerfilPage() {
           {step === 3 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-silver/70 mb-2">Areas de interesse</label>
+                <label className="block text-sm font-medium text-silver/70 mb-2">
+                  Áreas de interesse
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {INTEREST_OPTIONS.map((interest) => (
+                  {INTEREST_OPTIONS.map(interest => (
                     <button
                       key={interest}
                       type="button"
@@ -509,12 +527,21 @@ export default function CompletarPerfilPage() {
 
               <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                 <div>
-                  <p className="font-medium text-white text-sm">Aparecer no networking</p>
-                  <p className="text-xs text-silver/50">Outros participantes poderao te encontrar</p>
+                  <p className="font-medium text-white text-sm">
+                    Aparecer no networking
+                  </p>
+                  <p className="text-xs text-silver/50">
+                    Outros participantes poderão te encontrar
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setForm({ ...form, networking_visible: !form.networking_visible })}
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      networking_visible: !form.networking_visible
+                    })
+                  }
                   className={`relative w-12 h-6 rounded-full transition-colors ${
                     form.networking_visible ? 'bg-accent-500' : 'bg-white/20'
                   }`}
@@ -527,17 +554,21 @@ export default function CompletarPerfilPage() {
                 </button>
               </div>
 
-              {/* LGPD Consent Checkbox - required for new registrations */}
               {!isEditing && (
                 <label className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.lgpd_consent}
-                    onChange={(e) => setForm({ ...form, lgpd_consent: e.target.checked })}
+                    onChange={e =>
+                      setForm({ ...form, lgpd_consent: e.target.checked })
+                    }
                     className="mt-0.5 w-4 h-4 rounded border-white/30 bg-white/10 text-accent-500 focus:ring-accent-500 focus:ring-offset-0 flex-shrink-0"
                   />
                   <span className="text-xs text-silver/60 leading-relaxed">
-                    Li e concordo com a politica de privacidade e autorizo o compartilhamento dos meus dados pessoais com os patrocinadores do evento, conforme a LGPD (Lei Geral de Protecao de Dados). *
+                    Li e concordo com a política de privacidade e autorizo o
+                    compartilhamento dos meus dados pessoais com os
+                    patrocinadores do evento, conforme a LGPD (Lei Geral de
+                    Proteção de Dados). *
                   </span>
                 </label>
               )}
@@ -547,7 +578,7 @@ export default function CompletarPerfilPage() {
           {error && <p className="text-sm text-red-400">{error}</p>}
 
           {/* Navigation buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-8">
             {step > 1 && (
               <button
                 type="button"
@@ -562,23 +593,30 @@ export default function CompletarPerfilPage() {
               <button
                 type="button"
                 onClick={handleNext}
-                disabled={checkingCpf}
-                className="flex-1 btn-primary text-lg"
+                className="flex-1 px-8 py-4 bg-[#F2C94C] text-[#030816] rounded-full font-display uppercase tracking-widest font-bold text-lg hover:bg-white hover:scale-[1.02] transition-all"
               >
-                {checkingCpf ? 'Verificando...' : 'Proximo'}
+                Próximo
               </button>
             ) : (
               <button
                 type="submit"
-                disabled={saving || !form.full_name || (!isEditing && (cpfApproved !== true || !form.lgpd_consent))}
-                className="flex-1 btn-primary text-lg"
+                disabled={
+                  saving ||
+                  !form.full_name ||
+                  (!isEditing && (cpfApproved !== true || !form.lgpd_consent))
+                }
+                className="flex-1 px-8 py-4 bg-[#F2C94C] text-[#030816] rounded-full font-display uppercase tracking-widest font-bold text-lg hover:bg-white hover:scale-[1.02] transition-all disabled:opacity-50"
               >
-                {saving ? 'Salvando...' : isEditing ? 'Salvar alteracoes' : 'Entrar no evento'}
+                {saving
+                  ? 'Salvando...'
+                  : isEditing
+                    ? 'Salvar alterações'
+                    : 'Entrar no evento'}
               </button>
             )}
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 }
